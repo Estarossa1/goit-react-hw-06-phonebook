@@ -1,9 +1,22 @@
 import React, { useState } from 'react';
-import { nanoid } from 'nanoid';
+import { nanoid } from '@reduxjs/toolkit';
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact } from 'redux/contactsSlice';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { getContacts } from 'redux/selectors';
 import PropTypes from 'prop-types';
-import { Container, Button, Input, Label, Form } from './ContactForm.styled';
+import { Form, Label, Input, Button } from './ContactForm.styled';
 
-const ContactForm = ({ onAddContact }) => {
+const notify = {
+  error: message => toast.error(message),
+  success: message => toast.success(message),
+};
+
+const ContactForm = () => {
+  const dispatch = useDispatch();
+  const contacts = useSelector(getContacts);
+
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
 
@@ -20,19 +33,32 @@ const ContactForm = ({ onAddContact }) => {
     event.preventDefault();
 
     if (name.trim() !== '' && number.trim() !== '') {
+      const isExistingContact = contacts.some(
+        contact => contact.name.toLowerCase() === name.toLowerCase()
+      );
+
+      if (isExistingContact) {
+        toast.error(`${name} is already in contacts`);
+        return;
+      }
+
       const newContact = {
         id: nanoid(),
         name: name.trim(),
         number: number.trim(),
       };
-      onAddContact(newContact);
+
+      dispatch(addContact(newContact));
       setName('');
       setNumber('');
+
+      notify.success(`${newContact.name} added to contacts`);
     }
   };
 
   return (
-    <Container>
+    <section>
+      <ToastContainer />
       <Form onSubmit={handleSubmit}>
         <Label htmlFor="name">Name:</Label>
         <Input
@@ -57,19 +83,14 @@ const ContactForm = ({ onAddContact }) => {
         <br />
         <Button type="submit">Add Contact</Button>
       </Form>
-    </Container>
+    </section>
   );
 };
 
 ContactForm.propTypes = {
-  contacts: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      number: PropTypes.string.isRequired,
-    })
-  ).isRequired,
-  onAddContact: PropTypes.func.isRequired,
+  name: PropTypes.string,
+  number: PropTypes.string,
+  onSubmit: PropTypes.func,
 };
 
 export default ContactForm;
