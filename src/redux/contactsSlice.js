@@ -21,6 +21,9 @@ const contactsSlice = createSlice({
         contact => contact.id !== action.payload
       );
     },
+    setFilter: (state, action) => {
+      state.filter = action.payload;
+    },
   },
 });
 
